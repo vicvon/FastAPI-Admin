@@ -6,7 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app_setup.permission_providers import get_permission_provider_bundle
 from common.auth import CurrentPrincipal
-from common.exceptions import BusinessError
+from common.exceptions import AuthenticationError, PermissionError
 from common.ports import IDataScopeResolver, IPermissionChecker, IPermissionManager
 from core.context import RequestContext
 from core.dependencies import get_db
@@ -206,15 +206,12 @@ def require_permission():
         checker: IPermissionChecker = Depends(get_permission_checker),
     ) -> CurrentPrincipal:
         if current_user.user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="用户认证失败",
-            )
+            raise AuthenticationError("用户认证失败")
         obj = request.url.path
         act = request.method.upper()
         try:
             await checker.check_permission(current_user.user_id, obj, act)
-        except BusinessError:
+        except PermissionError as exc:
             logger.warning(
                 "auth.permission_denied sub={} obj={} act={} user_id={}",
                 current_user.subject,
@@ -222,10 +219,7 @@ def require_permission():
                 act,
                 current_user.user_id,
             )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Forbidden",
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=exc.message)
         return current_user
 
     return dependency

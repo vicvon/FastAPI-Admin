@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from common.exceptions import BusinessError
+from common.exceptions import PermissionError
 from common.ports import IPermissionChecker
 from modules.iam.domain.rbac_service import RbacDomainService
 
@@ -17,4 +17,4 @@ class PermissionCheckerImpl(IPermissionChecker):
     async def check_permission(self, user_id: int, resource: str, action: str) -> None:
         allowed = await self.has_permission(user_id, resource, action)
         if not allowed:
-            raise BusinessError("Forbidden", code=403)
+            raise PermissionError("Forbidden")

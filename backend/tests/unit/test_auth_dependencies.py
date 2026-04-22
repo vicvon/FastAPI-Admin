@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from starlette.requests import Request
 
 from common.auth import CurrentPrincipal
-from common.exceptions import BusinessError
+from common.exceptions import PermissionError
 from modules.admin.api import dependencies as admin_dependencies
 
 
@@ -27,7 +27,7 @@ class _FakeChecker:
         assert resource == "/api/v1/labels"
         assert action == "GET"
         if self.should_raise:
-            raise BusinessError("Forbidden", code=403)
+            raise PermissionError("Forbidden")
 
 
 @pytest.mark.asyncio

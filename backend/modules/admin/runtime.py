@@ -33,6 +33,8 @@ async def start_admin_runtime_tasks(app: FastAPI) -> None:
     if ":memory:" in (get_settings().database_url or ""):
         setattr(app.state, ROLE_GRANT_RETRY_STOP_KEY, None)
         setattr(app.state, ROLE_GRANT_RETRY_TASK_KEY, None)
+        logger.info(
+            "admin.runtime.role_grant_retry.disabled reason=in_memory_database")
         return
 
     stop_event = asyncio.Event()
@@ -48,6 +50,11 @@ async def start_admin_runtime_tasks(app: FastAPI) -> None:
             user_role_batch_limit=200,
         ),
     )
+    logger.info(
+        "admin.runtime.role_grant_retry.started state_key={} stop_key={}",
+        ROLE_GRANT_RETRY_TASK_KEY,
+        ROLE_GRANT_RETRY_STOP_KEY,
+    )
 
 
 async def stop_admin_runtime_tasks(app: FastAPI) -> None:
@@ -56,5 +63,12 @@ async def stop_admin_runtime_tasks(app: FastAPI) -> None:
         stop_event.set()
     try:
         await _stop_task(getattr(app.state, ROLE_GRANT_RETRY_TASK_KEY, None))
+        logger.info(
+            "admin.runtime.role_grant_retry.stopped state_key={}",
+            ROLE_GRANT_RETRY_TASK_KEY,
+        )
     except Exception:
-        logger.opt(exception=True).warning("shutdown role grant retry loop failed")
+        logger.opt(exception=True).warning(
+            "admin.runtime.role_grant_retry.stop_failed state_key={}",
+            ROLE_GRANT_RETRY_TASK_KEY,
+        )

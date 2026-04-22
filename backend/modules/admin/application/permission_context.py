@@ -7,11 +7,11 @@ This module is retained only as a temporary compatibility shell and currently
 has no in-repository callers.
 """
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, Request
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app_setup.resource_registry import resource_registry
-from common.exceptions import BusinessError, NotFoundError
+from app_setup.resource_registry import resolve_required_resource_action
+from common.exceptions import NotFoundError, PermissionError
 from common.resource_registry import ResourceAction
 from core.dependencies import get_db
 from modules.admin.application.data_permission_resolver import (
@@ -57,7 +57,7 @@ class DataPermissionContext:
             entity=entity,
         )
         if not allowed:
-            raise BusinessError("无数据操作权限", code=403)
+            raise PermissionError("无数据操作权限")
         return entity
 
     async def ensure_exists_and_allowed(self, *, user, entity, not_found_message: str):
@@ -66,22 +66,10 @@ class DataPermissionContext:
         return await self.ensure_entity_allowed(user=user, entity=entity)
 
 
-def resolve_resource_action(request: Request) -> ResourceAction:
-    route = request.scope.get("route")
-    route_path = getattr(route, "path", request.url.path)
-    action = resource_registry.resolve(route_path, request.method)
-    if action is None:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Resource mapping not found",
-        )
-    return action
-
-
 async def get_data_permission_context(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> DataPermissionContext:
-    resource_action = resolve_resource_action(request)
+    resource_action = resolve_required_resource_action(request)
     resolver = build_data_permission_resolver(db)
     return DataPermissionContext(resource_action=resource_action, resolver=resolver)

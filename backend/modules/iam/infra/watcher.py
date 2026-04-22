@@ -48,13 +48,17 @@ class RedisWatcher(Watcher):
             payload = {"type": "update", "source": self.instance_id}
             self.client.publish(self.channel, json.dumps(payload))
             logger.info(
-                "Published policy update to {} pid={} instance={}",
+                "iam.redis_watcher.update_published channel={} pid={} instance={}",
                 self.channel,
                 os.getpid(),
                 self.instance_id,
             )
         except Exception as exc:
-            logger.error("Failed to publish policy update: {}", exc)
+            logger.error(
+                "iam.redis_watcher.update_publish_failed channel={} error_type={}",
+                self.channel,
+                type(exc).__name__,
+            )
 
     def _start_listen(self) -> None:
         self.running = True
@@ -62,9 +66,13 @@ class RedisWatcher(Watcher):
             self.pubsub.subscribe(self.channel)
             self.thread = threading.Thread(target=self._listen, daemon=True)
             self.thread.start()
-            logger.info("Started RedisWatcher on channel {}", self.channel)
+            logger.info("iam.redis_watcher.started channel={}", self.channel)
         except Exception as exc:
-            logger.error("Failed to start RedisWatcher: {}", exc)
+            logger.error(
+                "iam.redis_watcher.start_failed channel={} error_type={}",
+                self.channel,
+                type(exc).__name__,
+            )
 
     def _listen(self) -> None:
         while self.running:
@@ -86,7 +94,7 @@ class RedisWatcher(Watcher):
                     if source == self.instance_id:
                         continue
                     logger.info(
-                        "Received update message from {} pid={} instance={} source={}",
+                        "iam.redis_watcher.update_received channel={} pid={} instance={} source={}",
                         self.channel,
                         os.getpid(),
                         self.instance_id,
@@ -99,7 +107,11 @@ class RedisWatcher(Watcher):
             except Exception as exc:
                 if not self.running:
                     break
-                logger.error("Error in RedisWatcher listener: {}", exc)
+                logger.error(
+                    "iam.redis_watcher.listen_failed channel={} error_type={}",
+                    self.channel,
+                    type(exc).__name__,
+                )
                 time.sleep(1)
                 with contextlib.suppress(Exception):
                     self.pubsub.close()

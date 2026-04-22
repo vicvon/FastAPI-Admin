@@ -65,9 +65,10 @@ async def run_role_grant_retry_loop(
                         )
                         if user_attempted > 0:
                             logger.info(
-                                "admin.user_role_retry_loop attempted={} succeeded={}",
+                                "admin.user_role_retry.processed attempted={} succeeded={} batch_limit={}",
                                 user_attempted,
                                 user_succeeded,
+                                user_role_batch_limit,
                             )
                         now_ts = asyncio.get_running_loop().time()
                         should_run_role_retry = (
@@ -82,22 +83,32 @@ async def run_role_grant_retry_loop(
                             ) = await service.retry_failed_grant_jobs(limit=batch_limit)
                             if attempted > 0:
                                 logger.info(
-                                    "admin.role_grant_retry_loop attempted={} succeeded={}",
+                                    "admin.role_grant_retry.processed attempted={} succeeded={} batch_limit={}",
                                     attempted,
                                     succeeded,
+                                    batch_limit,
                                 )
                             cleaned = await service.cleanup_synced_grant_jobs(
                                 limit=batch_limit
                             )
                             if cleaned > 0:
                                 logger.info(
-                                    "admin.role_grant_cleanup cleaned={}", cleaned
+                                    "admin.role_grant_cleanup.cleaned cleaned={} batch_limit={}",
+                                    cleaned,
+                                    batch_limit,
                                 )
                             last_role_grant_retry_at = now_ts
                 else:
-                    logger.debug("admin.role_grant_retry_loop lock not acquired")
+                    logger.debug(
+                        "admin.role_grant_retry.lock_skipped lock_key={}",
+                        ROLE_GRANT_RETRY_LOOP_LOCK_KEY,
+                    )
         except Exception:
-            logger.opt(exception=True).error("admin role grant retry failed")
+            logger.opt(exception=True).error(
+                "admin.role_grant_retry.failed lock_key={} interval_seconds={}",
+                ROLE_GRANT_RETRY_LOOP_LOCK_KEY,
+                interval_seconds,
+            )
 
         try:
             await asyncio.wait_for(stop_event.wait(), timeout=interval_seconds)

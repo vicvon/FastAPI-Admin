@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.auth import CurrentPrincipal
-from common.exceptions import BusinessError, NotFoundError
+from common.exceptions import NotFoundError, PermissionError
 from common.ports import IDataScopeResolver
 from common.responses import ResponseSchema
 from core.dependencies import get_db
@@ -141,7 +141,7 @@ async def update_label(
         entity=existing,
     )
     if not allowed:
-        raise BusinessError("无数据操作权限", code=403)
+        raise PermissionError("无数据操作权限")
     label = await service.update(
         id=int(id),
         name=data.name,
@@ -213,7 +213,7 @@ async def delete_label(
         entity=existing,
     )
     if not allowed:
-        raise BusinessError("无数据操作权限", code=403)
+        raise PermissionError("无数据操作权限")
 
     await service.delete(id=int(id), operator_id=int(current_user.id))
     return ResponseSchema(data=None, message="删除成功")

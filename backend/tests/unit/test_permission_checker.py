@@ -1,6 +1,6 @@
 import pytest
 
-from common.exceptions import BusinessError
+from common.exceptions import PermissionError
 from modules.iam.application.permission_checker import PermissionCheckerImpl
 
 
@@ -24,10 +24,10 @@ async def test_permission_checker_returns_true_for_allowed_subject() -> None:
 
 
 @pytest.mark.asyncio
-async def test_permission_checker_raises_business_error_when_denied() -> None:
+async def test_permission_checker_raises_permission_error_when_denied() -> None:
     checker = PermissionCheckerImpl(_FakeRbacService(allowed=False))
 
-    with pytest.raises(BusinessError) as exc_info:
+    with pytest.raises(PermissionError) as exc_info:
         await checker.check_permission(7, "/api/v1/labels", "GET")
 
     assert exc_info.value.code == 403

@@ -23,6 +23,30 @@ class BusinessError(AppError):
         super().__init__(code=code, message=message, data=data)
 
 
+class AuthenticationError(AppError):
+    """认证失败异常"""
+
+    def __init__(
+        self,
+        message: str = "认证失败",
+        code: int = 401,
+        data: Any | None = None,
+    ):
+        super().__init__(code=code, message=message, data=data)
+
+
+class PermissionError(AppError):
+    """权限不足异常"""
+
+    def __init__(
+        self,
+        message: str = "无权限执行该操作",
+        code: int = 403,
+        data: Any | None = None,
+    ):
+        super().__init__(code=code, message=message, data=data)
+
+
 class NotFoundError(AppError):
     """资源不存在异常"""
 
@@ -35,3 +59,27 @@ class ValidationError(AppError):
 
     def __init__(self, message: str = "Validation error"):
         super().__init__(code=400, message=message)
+
+
+class InfrastructureError(AppError):
+    """基础设施异常，如缓存、锁、内部运行时故障。"""
+
+    def __init__(
+        self,
+        message: str = "基础设施异常",
+        code: int = 500,
+        data: Any | None = None,
+    ):
+        super().__init__(code=code, message=message, data=data)
+
+
+class ExternalServiceError(AppError):
+    """外部依赖异常，如 Redis、第三方服务、消息系统等。"""
+
+    def __init__(
+        self,
+        message: str = "外部依赖异常",
+        code: int = 502,
+        data: Any | None = None,
+    ):
+        super().__init__(code=code, message=message, data=data)

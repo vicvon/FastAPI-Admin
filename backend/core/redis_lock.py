@@ -23,7 +23,10 @@ async def redis_lock(*, key: str, ttl_seconds: int):
             )
         except Exception as e:
             logger.opt(exception=True).warning(
-                f"redis_lock acquisition failed due to network/server error: {e}"
+                "infra.redis_lock.acquire_failed key={} full_key={} reason={}",
+                key,
+                full_key,
+                type(e).__name__,
             )
             ok = False
         yield ok
@@ -39,4 +42,8 @@ async def redis_lock(*, key: str, ttl_seconds: int):
                 """
                 await cache.client.eval(release_script, 1, full_key, token)
             except Exception:
-                logger.opt(exception=True).warning("redis_lock release failed")
+                logger.opt(exception=True).warning(
+                    "infra.redis_lock.release_failed key={} full_key={}",
+                    key,
+                    full_key,
+                )

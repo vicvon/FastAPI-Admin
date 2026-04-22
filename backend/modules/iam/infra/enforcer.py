@@ -49,7 +49,10 @@ def _init_watcher(enforcer: casbin.Enforcer) -> None:
         enforcer.set_watcher(watcher)
         watcher.set_update_callback(enforcer.load_policy)
     except Exception as exc:
-        logger.warning("Failed to initialize Casbin Redis Watcher: {}", exc)
+        logger.warning(
+            "iam.enforcer.watcher_init_failed error_type={}",
+            type(exc).__name__,
+        )
 
 
 def get_iam_enforcer() -> casbin.Enforcer:
@@ -85,7 +88,7 @@ def _close_watcher(enforcer: casbin.Enforcer | None) -> None:
         try:
             watcher.close()
         except Exception:
-            logger.opt(exception=True).warning("close casbin watcher failed")
+            logger.opt(exception=True).warning("iam.enforcer.watcher_close_failed")
 
 
 def _prune_role_inheritance_grouping_policies(enforcer: casbin.Enforcer) -> None:

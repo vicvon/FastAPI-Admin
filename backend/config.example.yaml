@@ -1,0 +1,57 @@
+# FastAPI Admin Configuration Example
+
+app_name: "FastAPI Admin"
+debug: false
+expose_error_detail: false
+database_url: "mysql+aiomysql://root:password@localhost:3306/fastapi_admin"
+
+# Security / JWT
+secret_key: "change-me-in-production-environment-123456789012"
+algorithm: "HS256"
+access_token_expire_minutes: 30
+refresh_token_expire_minutes: 10080  # 60 * 24 * 7
+token_issuer: "FastAPI Admin"
+token_audience: "FastAPI Admin"
+
+# Snowflake ID
+snowflake_node_id: 0
+snowflake_epoch_ms: 1767196800000
+
+# Redis Configuration
+redis:
+  # Mode: standalone, sentinel, cluster
+  mode: "standalone"
+
+  # Standalone URL
+  url: "redis://localhost:6379/0"
+
+  # Sentinel/Cluster Nodes (comma separated)
+  # nodes: "10.0.0.1:6379,10.0.0.2:6379,10.0.0.3:6379"
+
+  # Sentinel Master Name
+  master_name: "mymaster"
+
+  # Common settings
+  password: ""
+  prefix: "fastapi-admin:"
+  socket_timeout: 5
+  max_connections: 10
+
+# Captcha Configuration
+captcha:
+  enabled: true
+  ttl_seconds: 300
+  length: 4
+  max_attempts: 5
+
+# Logging Configuration
+# 简化配置：直接指定保留天数和单个文件大小
+log:
+  level: "INFO"
+  console_enabled: true
+  file_enabled: true
+  directory: "logs"
+  filename: "app.log"
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level:<8} | {name}:{function}:{line} | rid={extra[request_id]} uid={extra[user_id]} ip={extra[ip]} | {message}"
+  retention: "30 days"  # 旧日志文件保留30天
+  rotation: "100 MB"  # 单个日志文件最大100MB

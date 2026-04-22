@@ -1,0 +1,82 @@
+[project]
+name = "FastAPI-Admin-Backend"
+version = "0.1.0"
+description = "FastAPI Admin Backend Service"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi[standard]>=0.128.6",
+    "uvicorn>=0.27.0",
+    "loguru>=0.7.3",
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.1.0",
+    "sqlmodel>=0.0.14",
+    "alembic>=1.13.0",
+    "aiomysql>=0.2.0",     # Async MySQL driver
+    "redis>=5.2.0,<6.5",
+    "casbin>=1.32.0",
+    "casbin_sqlalchemy_adapter>=1.3.0",
+    "captcha>=0.6.0",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "bcrypt==4.0.1", # Pin bcrypt to avoid passlib incompatibility
+    "pymysql[rsa]>=1.1.2",
+    "pyyaml>=6.0.3",
+    "greenlet>=3.3.1",
+    "openpyxl>=3.1.5",
+    "aioboto3>=13.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "httpx>=0.26.0",
+    "aiosqlite>=0.20.0",
+    "mypy>=1.8.0",
+    "ruff>=0.1.14",
+]
+
+[[tool.uv.index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]
+python_files = ["test_*.py"]
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+extend-exclude = ["tools", "alembic"]
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "ARG001", # unused arguments in functions
+    "SIM",  # flake8-simplify
+    "RUF",  # Ruff
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "W191",  # indentation contains tabs
+    "B904",  # Allow raising exceptions without from e, for HTTPException
+]
+
+[tool.ruff.lint.isort]
+# 配合 isort 规则，强制将导入分为三段：标准库、第三方库、本地库
+combine-as-imports = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

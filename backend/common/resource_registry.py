@@ -37,23 +37,3 @@ class ResourceRegistry:
             if key not in self._mapping:
                 unknown.append(key)
         return sorted(unknown)
-
-
-resource_registry = ResourceRegistry()
-
-# 当前模板只保留已交付模块的资源映射。
-resource_registry.register(
-    "/api/v1/labels",
-    "GET",
-    ResourceAction(resource_type="labels", action="view", primary_resource="labels"),
-)
-resource_registry.register(
-    "/api/v1/labels/{id}",
-    "PUT",
-    ResourceAction(resource_type="labels", action="edit", primary_resource="labels"),
-)
-resource_registry.register(
-    "/api/v1/labels/{id}",
-    "DELETE",
-    ResourceAction(resource_type="labels", action="edit", primary_resource="labels"),
-)

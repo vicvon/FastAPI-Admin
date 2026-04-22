@@ -10,15 +10,13 @@ has no in-repository callers.
 from fastapi import Depends, HTTPException, Request, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app_setup.resource_registry import resource_registry
 from common.exceptions import BusinessError, NotFoundError
+from common.resource_registry import ResourceAction
 from core.dependencies import get_db
 from modules.admin.application.data_permission_resolver import (
     DataPermissionResolver,
     build_data_permission_resolver,
-)
-from modules.admin.application.resource_registry import (
-    ResourceAction,
-    resource_registry,
 )
 
 

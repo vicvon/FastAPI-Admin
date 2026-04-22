@@ -216,7 +216,7 @@ backend/
 
 - **API 权限接入**: 新增接口时，先定义资源与动作语义，再通过 `require_permission()` 或后续基于 `IPermissionChecker` 的模块依赖接入权限校验；不要直接把 URL 路径字符串和 Casbin 细节写进业务服务。
 - **数据权限接入**: 需要做数据行级过滤或实体级可操作校验时，统一通过 `IDataScopeResolver.build_query_scope()` 与 `IDataScopeResolver.can_operate_entity()` 接入；禁止新代码直接依赖 `DataPermissionContext`。
-- **资源映射维护**: `modules/admin/application/resource_registry.py` 只允许维护当前模板真实交付模块的资源映射。新增业务模块时，必须同步补充对应资源映射；已经移除的业务模块映射必须及时删除，禁止长期保留历史残留资源。
+- **资源映射维护**: 资源映射由模块级 `manifest.py` 声明，并通过 `app_setup/resource_registry.py` 统一收集。新增业务模块时，必须同步补充对应资源映射；已经移除的业务模块映射必须及时删除，禁止长期保留历史残留资源。
 - **权限配置真源**: 用户、角色、菜单、接口权限、数据权限规则等配置真源在 `modules/admin/`；Casbin 相关运行时投影由 `modules/iam/` 承接，禁止反向直接修改投影表来替代业务配置。
 - **后台任务约束**: 涉及授权重试、权限投影、策略同步的后台任务必须通过 `IPermissionManager` 或装配层工厂接入，不得在任务中直接依赖具体 Casbin 实现。
 - **系统角色语义**: 系统内置角色依赖 `role.code` 与 `is_system` 表达主语义，历史 `id == 1` 仅作兼容兜底。接口创建的普通角色 `code` 统一使用 `role:{id}`，内置角色的稳定 `code` 通过数据库初始化脚本写入。

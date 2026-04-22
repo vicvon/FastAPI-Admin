@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 
+from app_setup.module_registry import get_module_manifests
 from common.responses import ResponseSchema
-from modules.admin.api.v1.router import router as admin_router
-from modules.label_manager.api.v1.router import router as label_manager_router
 
 
 async def health_check() -> ResponseSchema[dict]:
@@ -10,8 +9,9 @@ async def health_check() -> ResponseSchema[dict]:
 
 
 def register_routers(app: FastAPI) -> None:
-    app.include_router(admin_router)
-    app.include_router(label_manager_router)
+    for manifest in get_module_manifests():
+        if manifest.router is not None:
+            app.include_router(manifest.router)
     app.add_api_route(
         "/health",
         health_check,

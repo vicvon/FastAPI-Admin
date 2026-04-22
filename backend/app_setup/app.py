@@ -4,6 +4,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app_setup.lifecycle import lifespan
 from app_setup.permission_providers import init_permission_provider_bundle
+from app_setup.provider_registry import register_module_providers
 from app_setup.resource_registry import refresh_resource_registry
 from app_setup.router_registry import register_routers
 from common.exceptions import AppError
@@ -62,4 +63,5 @@ def create_app() -> FastAPI:
     register_routers(app)
     refresh_resource_registry()
     init_permission_provider_bundle(app)
+    register_module_providers(app)
     return app

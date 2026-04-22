@@ -1,21 +1,10 @@
-from types import SimpleNamespace
-
 import pytest
 from fastapi import HTTPException
 from starlette.requests import Request
 
+from app_setup import auth_dependencies
 from common.auth import CurrentPrincipal
-from common.exceptions import PermissionError
-from modules.admin.api import dependencies as admin_dependencies
-
-
-class _FakeUserRepo:
-    def __init__(self, user):
-        self._user = user
-
-    async def get(self, user_id: int):
-        assert user_id == self._user.id
-        return self._user
+from common.exceptions import AuthenticationError, PermissionError
 
 
 class _FakeChecker:
@@ -30,37 +19,51 @@ class _FakeChecker:
             raise PermissionError("Forbidden")
 
 
+class _FakePrincipalResolver:
+    def __init__(self, principal: CurrentPrincipal | None = None, *, fail: bool = False):
+        self._principal = principal
+        self._fail = fail
+
+    async def resolve(self, token: str) -> CurrentPrincipal:
+        assert token == "token"
+        if self._fail:
+            raise AuthenticationError("用户认证失败")
+        assert self._principal is not None
+        return self._principal
+
+
 @pytest.mark.asyncio
 async def test_resolve_authenticated_user_returns_user(
-    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    user = SimpleNamespace(
-        id=99,
+    principal = CurrentPrincipal(
+        user_id=99,
         username="admin",
         is_active=True,
         token_version=2,
     )
 
-    class _FakeTokenService:
-        async def is_access_token_revoked(self, payload):
-            return False
-
-    monkeypatch.setattr(
-        admin_dependencies, "decode_access_token", lambda _: {"sub": "99", "tv": 2}
-    )
-    monkeypatch.setattr(admin_dependencies, "TokenService", _FakeTokenService)
-
-    resolved = await admin_dependencies._resolve_authenticated_user(
+    resolved = await auth_dependencies._resolve_current_principal(
         token="token",
-        user_repo=_FakeUserRepo(user),
+        resolver=_FakePrincipalResolver(principal),
     )
 
     assert resolved.username == "admin"
 
 
 @pytest.mark.asyncio
+async def test_resolve_authenticated_user_returns_401_when_resolver_rejects() -> None:
+    with pytest.raises(HTTPException) as exc_info:
+        await auth_dependencies._resolve_current_principal(
+            token="token",
+            resolver=_FakePrincipalResolver(fail=True),
+        )
+
+    assert exc_info.value.status_code == 401
+
+
+@pytest.mark.asyncio
 async def test_require_permission_returns_403_when_checker_denies() -> None:
-    dependency = admin_dependencies.require_permission()
+    dependency = auth_dependencies.require_permission()
     principal = CurrentPrincipal(
         user_id=99,
         username="admin",

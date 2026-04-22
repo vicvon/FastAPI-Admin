@@ -152,8 +152,8 @@ backend/
   - **Application Contracts**: 应用层输入模型统一定义在 `application/contracts.py` 中；`application/services.py` **禁止**依赖 `api/v1/schemas.py`。如果接口层需要复用应用层输入模型，可以在 `api/v1/schemas.py` 中导入或再导出。
   - **API Schema 职责**: `api/v1/schemas.py` 负责请求/响应模型组织与对外接口表达；响应模型、展示模型保留在 API 层，请求契约和应用层输入模型优先放到 `application/contracts.py`。
   - **共享身份抽象**: 业务模块获取当前登录用户时，优先依赖 `common/auth/identity.py` 中的 `CurrentPrincipal`；除 `admin` 模块自身外，禁止将 `modules.admin.domain.entities.User` 作为跨模块共享身份模型。
-  - **权限 Port 约束**: 业务模块做 API 权限校验时，必须依赖 `IPermissionChecker`；`admin` 配置域做权限投影与同步时，必须依赖 `IPermissionManager`；数据权限必须依赖 `IDataScopeResolver`。禁止新增模块直接依赖 `admin.application.permission_context`、`core.casbin.enforcer` 或 Casbin API。
-  - **兼容层约束**: `modules/admin/application/permission_context.py` 仅作为旧数据权限入口兼容层，新代码禁止继续新增对它的依赖。
+  - **权限 Port 约束**: 业务模块做 API 权限校验时，必须依赖 `IPermissionChecker`；`admin` 配置域做权限投影与同步时，必须依赖 `IPermissionManager`；数据权限必须依赖 `IDataScopeResolver`。禁止新增模块直接依赖 `core.casbin.enforcer` 或 Casbin API。
+  - **装配层权限依赖**: 共享的当前用户解析、权限校验和数据权限 Provider 统一通过 `app_setup/auth_dependencies.py` 与 `app_setup/permission_providers.py` 暴露；业务模块不得跨模块复用其他业务模块的 `api/dependencies.py`。
 
 ### 3. 数据库规范（手工补充）
 

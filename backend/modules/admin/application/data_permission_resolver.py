@@ -29,26 +29,25 @@ class DataPermissionResolver:
         )
 
     async def build_query_scope(
-        self, *, user, resource_type: str, action: str, model_cls
+        self, *, user_id: int, resource_type: str, action: str, model_cls
     ):
         scope = await self.resolve_scope(
-            user=user, resource_type=resource_type, action=action
+            user_id=user_id, resource_type=resource_type, action=action
         )
         handler = self.handler_registry.get(scope)
-        return handler.build_query_filter(user=user, model_cls=model_cls)
+        return handler.build_query_filter(user_id=user_id, model_cls=model_cls)
 
     async def can_operate_entity(
-        self, *, user, resource_type: str, action: str, entity
+        self, *, user_id: int, resource_type: str, action: str, entity
     ) -> bool:
         scope = await self.resolve_scope(
-            user=user, resource_type=resource_type, action=action
+            user_id=user_id, resource_type=resource_type, action=action
         )
         handler = self.handler_registry.get(scope)
-        return handler.can_operate_entity(user=user, entity=entity)
+        return handler.can_operate_entity(user_id=user_id, entity=entity)
 
-    async def resolve_scope(self, *, user, resource_type: str, action: str) -> str:
+    async def resolve_scope(self, *, user_id: int, resource_type: str, action: str) -> str:
         normalized_resource_type = resource_type.strip().lower()
-        user_id = int(user.id)
 
         user_rule = await self.scope_rule_repo.find_user_scope_rule_with_fallback(
             user_id=user_id,

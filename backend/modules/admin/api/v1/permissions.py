@@ -1,10 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from app_setup.auth_dependencies import require_permission
 from common.responses import ResponseSchema
-from modules.admin.api.dependencies import (
-    get_admin_permission_service,
-    require_permission,
-)
+from modules.admin.api.dependencies import get_admin_permission_service
 from modules.admin.api.v1.mappers import (
     to_global_api_permission_list_read,
     to_global_data_scope_list_read,

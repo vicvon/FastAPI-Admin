@@ -2,13 +2,12 @@ from collections.abc import Sequence
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from app_setup.auth_dependencies import get_current_principal, require_permission
 from common.auth import CurrentPrincipal
 from common.responses import ResponseSchema
 from modules.admin.api.dependencies import (
     get_admin_role_permission_app_service,
     get_admin_role_service,
-    get_current_principal,
-    require_permission,
 )
 from modules.admin.api.v1.mappers import (
     to_role_api_permission_list_read,
@@ -120,7 +119,8 @@ async def update_role(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
         ) from e
     if role is None or role.id is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="角色不存在")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="角色不存在")
 
     permission_ids = await service.get_permission_ids(role.id)
     parent_role_id = await service.get_parent_role_id(role.id)
@@ -157,7 +157,8 @@ async def grant_role_api_permissions(
             operator_id=current_user.user_id,
         )
     except RuntimeError as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
@@ -186,7 +187,8 @@ async def grant_role_data_permissions(
             operator_id=current_user.user_id,
         )
     except RuntimeError as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
@@ -209,7 +211,8 @@ async def get_role_api_permissions(
     try:
         dto = await service.get_role_api_permissions(role_id)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     return ResponseSchema(data=to_role_api_permission_list_read(dto))
 
 
@@ -228,7 +231,8 @@ async def get_role_data_permissions(
     try:
         dto = await service.get_role_data_scopes(role_id)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     return ResponseSchema(data=to_role_data_scope_list_read(dto))
 
 
@@ -245,7 +249,8 @@ async def get_role_menus(
     try:
         menu_tree = await service.get_role_menu_detail_tree(role_id)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     return ResponseSchema(data=RoleMenuListRead(menus=menu_tree))
 
 

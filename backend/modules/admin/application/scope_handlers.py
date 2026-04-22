@@ -8,24 +8,26 @@ from sqlalchemy import true
 
 class ScopeHandler(ABC):
     @abstractmethod
-    def build_query_filter(self, *, user: Any, model_cls: Any):
+    def build_query_filter(self, *, user_id: int, model_cls: Any):
         raise NotImplementedError
 
     @abstractmethod
-    def can_operate_entity(self, *, user: Any, entity: Any) -> bool:
+    def can_operate_entity(self, *, user_id: int, entity: Any) -> bool:
         raise NotImplementedError
 
 
 class AllScopeHandler(ScopeHandler):
-    def build_query_filter(self, *, user: Any, model_cls: Any):
+    def build_query_filter(self, *, user_id: int, model_cls: Any):
+        _ = (user_id, model_cls)
         return true()
 
-    def can_operate_entity(self, *, user: Any, entity: Any) -> bool:
+    def can_operate_entity(self, *, user_id: int, entity: Any) -> bool:
+        _ = (user_id, entity)
         return True
 
 
 class SelfScopeHandler(ScopeHandler):
-    def build_query_filter(self, *, user: Any, model_cls: Any):
+    def build_query_filter(self, *, user_id: int, model_cls: Any):
         owner_field = None
         if hasattr(model_cls, "owner_id"):
             owner_field = model_cls.owner_id
@@ -33,9 +35,9 @@ class SelfScopeHandler(ScopeHandler):
             owner_field = model_cls.created_by
         if owner_field is None:
             return true()
-        return owner_field == int(user.id)
+        return owner_field == int(user_id)
 
-    def can_operate_entity(self, *, user: Any, entity: Any) -> bool:
+    def can_operate_entity(self, *, user_id: int, entity: Any) -> bool:
         owner_val = None
         if hasattr(entity, "owner_id"):
             owner_val = entity.owner_id
@@ -43,7 +45,7 @@ class SelfScopeHandler(ScopeHandler):
             owner_val = entity.created_by
         if owner_val is None:
             return False
-        return int(owner_val) == int(user.id)
+        return int(owner_val) == int(user_id)
 
 
 class ScopeHandlerRegistry:

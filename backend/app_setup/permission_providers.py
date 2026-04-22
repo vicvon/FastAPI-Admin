@@ -5,9 +5,13 @@ from dataclasses import dataclass
 
 from fastapi import FastAPI
 
-from common.ports import IDataScopeResolver, IPermissionChecker, IPermissionManager
+from common.ports import (
+    ICurrentPrincipalResolver,
+    IDataScopeResolver,
+    IPermissionChecker,
+    IPermissionManager,
+)
 from core.database import AsyncSession, engine
-from modules.admin.application.data_scope_adapter import AdminDataScopeResolver
 from modules.iam.application import PermissionCheckerImpl, PermissionManagerImpl
 from modules.iam.domain import RbacDomainService
 from modules.iam.infra import (
@@ -21,6 +25,7 @@ from modules.iam.infra import (
 class PermissionProviderBundle:
     checker: IPermissionChecker | None = None
     manager: IPermissionManager | None = None
+    principal_resolver: ICurrentPrincipalResolver | None = None
     data_scope_resolver: IDataScopeResolver | None = None
 
 
@@ -38,9 +43,6 @@ def init_permission_provider_bundle(app: FastAPI) -> None:
         app.state.permission_providers = PermissionProviderBundle(
             checker=PermissionCheckerImpl(rbac_service),
             manager=build_permission_manager(
-                session_factory=lambda: AsyncSession(engine, expire_on_commit=False)
-            ),
-            data_scope_resolver=AdminDataScopeResolver(
                 session_factory=lambda: AsyncSession(engine, expire_on_commit=False)
             ),
         )

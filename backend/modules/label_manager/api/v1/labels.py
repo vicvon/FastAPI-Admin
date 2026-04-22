@@ -1,21 +1,19 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query, status
-from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.auth import CurrentPrincipal
 from common.exceptions import NotFoundError, PermissionError
 from common.ports import IDataScopeResolver
 from common.responses import ResponseSchema
-from core.dependencies import get_db
-from modules.admin.api.dependencies import (
+from modules.label_manager.api.dependencies import (
     get_current_principal,
     get_data_scope_resolver,
+    get_label_service,
     require_permission,
 )
 from modules.label_manager.application.services import LabelService
 from modules.label_manager.domain.entities import Label
-from modules.label_manager.infra.repositories import LabelRepository
 
 from .schemas import (
     LabelCreate,
@@ -26,11 +24,6 @@ from .schemas import (
 )
 
 router = APIRouter(prefix="/labels", tags=["标签管理"])
-
-
-async def get_label_service(db: AsyncSession = Depends(get_db)) -> LabelService:
-    repo = LabelRepository(db)
-    return LabelService(repo)
 
 
 def _to_label_read(label) -> LabelRead:

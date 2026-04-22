@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from common.module_registry import ModuleManifest, RuntimeTaskRegistration
 from modules.admin.api.v1.router import router as admin_router
+from modules.admin.providers import register_admin_module_providers
 from modules.admin.runtime import start_admin_runtime_tasks, stop_admin_runtime_tasks
 
 module_manifest = ModuleManifest(
@@ -14,4 +15,5 @@ module_manifest = ModuleManifest(
             shutdown=stop_admin_runtime_tasks,
         ),
     ),
+    provider_setup=register_admin_module_providers,
 )

@@ -95,8 +95,6 @@ uv run pytest tests/unit
 
 - [CLAUDE.md](file:///Users/fengjun/code/python/FastAPI-Admin/CLAUDE.md)
 - [permission_integration_guide.md](file:///Users/fengjun/code/python/FastAPI-Admin/documentation/permission_integration_guide.md)
-- [project_permission_ddd_refactor_plan.md](file:///Users/fengjun/code/python/FastAPI-Admin/documentation/project_permission_ddd_refactor_plan.md)
-- [remaining_work_todo_list.md](file:///Users/fengjun/code/python/FastAPI-Admin/documentation/remaining_work_todo_list.md)
 
 ## 权限接入约束
 
@@ -107,7 +105,7 @@ uv run pytest tests/unit
 - 数据权限统一依赖 `IDataScopeResolver`
 - 权限同步与投影统一依赖 `IPermissionManager`
 - 禁止新增模块直接依赖 `core.casbin.*`
-- 禁止新增模块直接依赖 `admin.application.permission_context`
+- 禁止在 `app_setup` 中硬编码业务模块仓储或权限实现
 
 ## 系统角色规则
 

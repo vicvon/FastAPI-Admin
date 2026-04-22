@@ -28,3 +28,4 @@ class ModuleManifest:
     router: APIRouter | None = None
     resource_registrations: tuple[ResourceRegistration, ...] = ()
     runtime_tasks: tuple[RuntimeTaskRegistration, ...] = ()
+    provider_setup: Callable[[FastAPI], None] | None = None

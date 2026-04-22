@@ -1,13 +1,17 @@
 import functools
+import base64
 import json
 import pickle
 from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import Any, Literal, TypeVar
 
 from config.settings import get_settings
+from core.logger import get_logger
 from core.redis_factory import create_async_redis_client
 
 T = TypeVar("T")
+CacheEncoding = Literal["json", "pickle"]
+logger = get_logger(__name__)
 
 
 class CacheManager:
@@ -40,67 +44,86 @@ class CacheManager:
     def make_key(self, key: str) -> str:
         return self._make_key(key)
 
-    def _serialize(self, value: Any, use_pickle: bool = False) -> str | bytes:
+    def _resolve_encoding(
+        self, *, use_pickle: bool = False, encoding: CacheEncoding = "json"
+    ) -> CacheEncoding:
         if use_pickle:
-            return pickle.dumps(value)
+            logger.warning(
+                "infra.cache.legacy_pickle_flag_used keyless_call=true encoding=pickle"
+            )
+            return "pickle"
+        return encoding
+
+    def _serialize(self, value: Any, *, encoding: CacheEncoding = "json") -> str:
+        if encoding == "pickle":
+            # Use base64 to keep redis decode_responses=True compatible.
+            return base64.b64encode(pickle.dumps(value)).decode("ascii")
         return json.dumps(value, default=str)
 
-    def _deserialize(self, value: Any, use_pickle: bool = False) -> Any:
+    def _deserialize(self, value: Any, *, encoding: CacheEncoding = "json") -> Any:
         if value is None:
             return None
-        if use_pickle:
-            return pickle.loads(value)
+        if encoding == "pickle":
+            if isinstance(value, str):
+                value = value.encode("ascii")
+            return pickle.loads(base64.b64decode(value))
         try:
             return json.loads(value)
         except (json.JSONDecodeError, TypeError):
             return value
 
-    async def get(self, key: str, default: Any = None, use_pickle: bool = False) -> Any:
+    async def get(
+        self,
+        key: str,
+        default: Any = None,
+        use_pickle: bool = False,
+        *,
+        encoding: CacheEncoding = "json",
+    ) -> Any:
         """获取缓存"""
         full_key = self._make_key(key)
-        # 如果是 pickle 模式, 客户端需要是 bytes 模式,或者手动 encode/decode
-        # 由于初始化时设置了 decode_responses=True,对于 pickle 可能需要特殊处理
-        # 简单起见,这里假设 pickle 存的是 bytes,但是 redis client 会尝试 decode utf-8 可能会出错
-        # 所以对于 pickle,建议单独处理或存为 hex 字符串
-        # 修正:为了兼容性,如果 use_pickle=True,我们应该使用 bytes 操作。
-        # 但 client 是全局的 decode_responses=True。
-        # 方案:使用 client.get(key) 获取 str,如果是 pickle 存的时候转为 latin-1 或 base64?
-        # 更优雅的方案:CacheManager 初始化时 decode_responses=False,然后在 json 处理时 decode。
-        # 或者:set/get 时临时覆盖 decode_responses? (Redis 客户端通常不支持动态覆盖)
-        #
-        # 调整策略:为了支持 Pickle,存储时转为 bytes,读取时也是 bytes。
-        # 但 client 设置了 decode_responses=True 会强制解码。
-        # 妥协:Pickle 模式下,我们将 bytes 编码为 latin-1 字符串存储 (1:1 映射)
-
+        resolved_encoding = self._resolve_encoding(
+            use_pickle=use_pickle, encoding=encoding
+        )
         try:
             value = await self.client.get(full_key)
             if value is None:
                 return default
-
-            if use_pickle:
-                # 假设存储时是以 latin-1 编码的字符串
-                return pickle.loads(value.encode("latin-1"))
-
-            return self._deserialize(value)
-        except Exception:
-            # log error
+            return self._deserialize(value, encoding=resolved_encoding)
+        except Exception as exc:
+            logger.opt(exception=True).warning(
+                "infra.cache.get_failed key={} encoding={} error_type={}",
+                key,
+                resolved_encoding,
+                type(exc).__name__,
+            )
             return default
 
     async def set(
-        self, key: str, value: Any, ttl: int | None = None, use_pickle: bool = False
+        self,
+        key: str,
+        value: Any,
+        ttl: int | None = None,
+        use_pickle: bool = False,
+        *,
+        encoding: CacheEncoding = "json",
     ) -> bool:
         """设置缓存"""
         full_key = self._make_key(key)
+        resolved_encoding = self._resolve_encoding(
+            use_pickle=use_pickle, encoding=encoding
+        )
         try:
-            if use_pickle:
-                data = pickle.dumps(value).decode("latin-1")
-            else:
-                data = self._serialize(value)
-
+            data = self._serialize(value, encoding=resolved_encoding)
             await self.client.set(full_key, data, ex=ttl)
             return True
-        except Exception as e:
-            print(f"Cache set error: {e}")
+        except Exception as exc:
+            logger.opt(exception=True).warning(
+                "infra.cache.set_failed key={} encoding={} error_type={}",
+                key,
+                resolved_encoding,
+                type(exc).__name__,
+            )
             return False
 
     async def delete(self, key: str) -> bool:
@@ -171,13 +194,18 @@ cache = CacheManager()
 
 
 def cached(
-    ttl: int = 60, key_builder: Callable | None = None, use_pickle: bool = False
+    ttl: int = 60,
+    key_builder: Callable | None = None,
+    use_pickle: bool = False,
+    *,
+    encoding: CacheEncoding = "json",
 ):
     """
     缓存装饰器
     :param ttl: 过期时间 (秒)
     :param key_builder: 自定义 Key 生成函数 (func, *args, **kwargs) -> str
-    :param use_pickle: 是否使用 pickle 序列化 (支持复杂对象)
+    :param use_pickle: 兼容旧调用, 为 True 时等价于 encoding="pickle"
+    :param encoding: 缓存序列化格式, 默认 json
     """
 
     def decorator(func):
@@ -194,7 +222,9 @@ def cached(
                 key = ":".join(key_parts)
 
             # 尝试获取缓存
-            cached_value = await cache.get(key, use_pickle=use_pickle)
+            cached_value = await cache.get(
+                key, use_pickle=use_pickle, encoding=encoding
+            )
             if cached_value is not None:
                 return cached_value
 
@@ -203,7 +233,13 @@ def cached(
 
             # 写入缓存
             if result is not None:
-                await cache.set(key, result, ttl=ttl, use_pickle=use_pickle)
+                await cache.set(
+                    key,
+                    result,
+                    ttl=ttl,
+                    use_pickle=use_pickle,
+                    encoding=encoding,
+                )
 
             return result
 

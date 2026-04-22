@@ -62,7 +62,7 @@ class ValidationError(AppError):
 
 
 class InfrastructureError(AppError):
-    """基础设施异常，如缓存、锁、内部运行时故障。"""
+    """基础设施异常, 如缓存、锁、内部运行时故障。"""
 
     def __init__(
         self,
@@ -74,7 +74,7 @@ class InfrastructureError(AppError):
 
 
 class ExternalServiceError(AppError):
-    """外部依赖异常，如 Redis、第三方服务、消息系统等。"""
+    """外部依赖异常, 如 Redis、第三方服务、消息系统等。"""
 
     def __init__(
         self,

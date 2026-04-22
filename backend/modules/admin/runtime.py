@@ -33,8 +33,7 @@ async def start_admin_runtime_tasks(app: FastAPI) -> None:
     if ":memory:" in (get_settings().database_url or ""):
         setattr(app.state, ROLE_GRANT_RETRY_STOP_KEY, None)
         setattr(app.state, ROLE_GRANT_RETRY_TASK_KEY, None)
-        logger.info(
-            "admin.runtime.role_grant_retry.disabled reason=in_memory_database")
+        logger.info("admin.runtime.role_grant_retry.disabled reason=in_memory_database")
         return
 
     stop_event = asyncio.Event()

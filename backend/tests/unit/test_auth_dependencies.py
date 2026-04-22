@@ -20,7 +20,9 @@ class _FakeChecker:
 
 
 class _FakePrincipalResolver:
-    def __init__(self, principal: CurrentPrincipal | None = None, *, fail: bool = False):
+    def __init__(
+        self, principal: CurrentPrincipal | None = None, *, fail: bool = False
+    ):
         self._principal = principal
         self._fail = fail
 
@@ -33,8 +35,7 @@ class _FakePrincipalResolver:
 
 
 @pytest.mark.asyncio
-async def test_resolve_authenticated_user_returns_user(
-) -> None:
+async def test_resolve_authenticated_user_returns_user() -> None:
     principal = CurrentPrincipal(
         user_id=99,
         username="admin",

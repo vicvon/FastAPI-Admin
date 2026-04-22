@@ -145,8 +145,7 @@ async def get_user_detail(
 ) -> ResponseSchema[UserDetailRead]:
     user = await service.get_user(user_id)
     if user is None or user.id is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="用户不存在")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="用户不存在")
 
     roles = await service.get_user_roles(user.id)
     role_data = [
@@ -188,8 +187,7 @@ async def update_user(
 
     user = await service.update_user(user_id, data)
     if user is None or user.id is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="用户不存在")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="用户不存在")
     user_read = UserRead(
         id=user.id,
         username=user.username,
@@ -218,12 +216,10 @@ async def assign_role(
 
     try:
         user = await service.assign_roles(
-            user_id=user_id, role_ids=[int(role_id)
-                                       for role_id in data.role_ids]
+            user_id=user_id, role_ids=[int(role_id) for role_id in data.role_ids]
         )
     except RuntimeError as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
     if user is None or user.id is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="用户或角色不存在"

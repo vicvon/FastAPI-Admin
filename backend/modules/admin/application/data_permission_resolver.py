@@ -46,7 +46,9 @@ class DataPermissionResolver:
         handler = self.handler_registry.get(scope)
         return handler.can_operate_entity(user_id=user_id, entity=entity)
 
-    async def resolve_scope(self, *, user_id: int, resource_type: str, action: str) -> str:
+    async def resolve_scope(
+        self, *, user_id: int, resource_type: str, action: str
+    ) -> str:
         normalized_resource_type = resource_type.strip().lower()
 
         user_rule = await self.scope_rule_repo.find_user_scope_rule_with_fallback(

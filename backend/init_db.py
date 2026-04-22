@@ -2,14 +2,14 @@ import asyncio
 import os
 import sys
 
-from alembic import command
 from alembic.config import Config
 from sqlalchemy import make_url, text
 from sqlalchemy.ext.asyncio import create_async_engine
+
+from alembic import command
 from config.settings import Settings, get_settings
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 async def ensure_database_exists(setting: Settings) -> None:
@@ -18,8 +18,7 @@ async def ensure_database_exists(setting: Settings) -> None:
     database_name = database_obj.database
 
     print(f"正在检查数据库是否存在: {database_name}")
-    base_url = database_obj.set(
-        database="").render_as_string(hide_password=False)
+    base_url = database_obj.set(database="").render_as_string(hide_password=False)
 
     sql = text(f"CREATE DATABASE IF NOT EXISTS {database_name}")
     if "mysql" in database_obj.drivername:

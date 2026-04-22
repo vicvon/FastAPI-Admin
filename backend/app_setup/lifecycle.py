@@ -22,6 +22,7 @@ def list_all_apis(app: FastAPI) -> None:
             for method in route.methods:
                 logger.debug(f"{summary}: {method.upper()}: {path}")
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     list_all_apis(app)

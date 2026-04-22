@@ -88,8 +88,7 @@ def get_admin_role_permission_app_service(
     role_repo: RoleRepository = Depends(get_role_repository),
     permission_repo: PermissionRepository = Depends(get_permission_repository),
     scope_rule_repo: ScopeRuleRepository = Depends(get_scope_rule_repository),
-    grant_job_repo: RoleGrantJobRepository = Depends(
-        get_role_grant_job_repository),
+    grant_job_repo: RoleGrantJobRepository = Depends(get_role_grant_job_repository),
     permission_manager: IPermissionManager = Depends(get_permission_manager),
 ) -> RolePermissionApplicationService:
     return RolePermissionApplicationService(

@@ -34,16 +34,14 @@ def create_app() -> FastAPI:
         force=True,
     )
     if not settings.secret_key or len(settings.secret_key) < 32:
-        raise RuntimeError(
-            "SECRET_KEY is required and must be at least 32 characters")
+        raise RuntimeError("SECRET_KEY is required and must be at least 32 characters")
     allowed_algorithms = {"HS256", "RS256", "ES256"}
     if settings.algorithm not in allowed_algorithms:
         raise RuntimeError(f"Unsupported JWT algorithm: {settings.algorithm}")
     if settings.access_token_expire_minutes <= 0:
         raise RuntimeError("ACCESS_TOKEN_EXPIRE_MINUTES must be positive")
 
-    app = FastAPI(title=settings.app_name,
-                  debug=settings.debug, lifespan=lifespan)
+    app = FastAPI(title=settings.app_name, debug=settings.debug, lifespan=lifespan)
 
     app.add_middleware(
         CORSMiddleware,
@@ -56,8 +54,7 @@ def create_app() -> FastAPI:
 
     app.add_exception_handler(AppError, app_exception_handler)
     app.add_exception_handler(HTTPException, http_exception_handler)
-    app.add_exception_handler(RequestValidationError,
-                              validation_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(Exception, global_exception_handler)
 
     register_routers(app)

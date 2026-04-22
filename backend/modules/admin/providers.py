@@ -12,10 +12,9 @@ def register_admin_module_providers(app: FastAPI) -> None:
     """注册 admin 模块对共享身份与数据权限的实现。"""
 
     bundle = get_permission_provider_bundle(app)
-    session_factory = lambda: AsyncSession(engine, expire_on_commit=False)
     bundle.principal_resolver = AdminCurrentPrincipalResolver(
-        session_factory=session_factory
+        session_factory=lambda: AsyncSession(engine, expire_on_commit=False)
     )
     bundle.data_scope_resolver = AdminDataScopeResolver(
-        session_factory=session_factory
+        session_factory=lambda: AsyncSession(engine, expire_on_commit=False)
     )

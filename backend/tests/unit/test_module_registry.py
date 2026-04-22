@@ -12,9 +12,12 @@ def test_module_registry_contains_current_template_modules() -> None:
     manifests = get_module_manifests()
 
     assert {manifest.name for manifest in manifests} == {"admin", "label_manager"}
-    assert next(
-        manifest for manifest in manifests if manifest.name == "admin"
-    ).provider_setup is not None
+    assert (
+        next(
+            manifest for manifest in manifests if manifest.name == "admin"
+        ).provider_setup
+        is not None
+    )
 
 
 def test_resource_registry_collects_module_resource_registrations() -> None:
@@ -50,5 +53,11 @@ def test_resource_registry_resolves_action_from_request_route() -> None:
 
 
 def test_label_manager_dependencies_use_app_setup_auth_entrypoints() -> None:
-    assert label_dependencies.get_current_principal.__module__ == "app_setup.auth_dependencies"
-    assert label_dependencies.get_data_scope_resolver.__module__ == "app_setup.auth_dependencies"
+    assert (
+        label_dependencies.get_current_principal.__module__
+        == "app_setup.auth_dependencies"
+    )
+    assert (
+        label_dependencies.get_data_scope_resolver.__module__
+        == "app_setup.auth_dependencies"
+    )

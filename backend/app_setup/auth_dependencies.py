@@ -88,7 +88,9 @@ def require_permission():
                 act,
                 current_user.user_id,
             )
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=exc.message)
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail=exc.message
+            )
         return current_user
 
     return dependency

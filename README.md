@@ -104,7 +104,7 @@ uv run pytest tests/unit
 - API 权限统一依赖 `IPermissionChecker`
 - 数据权限统一依赖 `IDataScopeResolver`
 - 权限同步与投影统一依赖 `IPermissionManager`
-- 禁止新增模块直接依赖 `core.casbin.*`
+- 禁止新增模块直接依赖 Casbin 具体实现
 - 禁止在 `app_setup` 中硬编码业务模块仓储或权限实现
 
 ## 系统角色规则

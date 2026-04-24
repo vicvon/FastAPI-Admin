@@ -5,10 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from common.types import SnowflakeId
 from modules.admin.application.contracts import (
     DataScopeRuleUpsert,
-    RoleApiGrantRequest,
     RoleCreate,
-    RoleDataScopeGrantRequest,
-    RoleGrantResponse,
     RoleUpdate,
     UserCreate,
     UserUpdate,
@@ -177,15 +174,30 @@ class RoleApiGroupRead(BaseModel):
     permissions: list[RoleApiPermissionRead] = Field(default_factory=list)
 
 
+class RoleApiGrantRequest(BaseModel):
+    api_permission_ids: list[SnowflakeId] = Field(default_factory=list)
+
+
 class RoleDataScopeRuleRead(BaseModel):
     resource_type: str
     custom_rule_id: SnowflakeId | None = None
+
+
+class RoleDataScopeGrantRequest(BaseModel):
+    data_scope_rules: list[DataScopeRuleUpsert] = Field(default_factory=list)
 
 
 class RoleDataScopeGroupRead(BaseModel):
     view_scope: DataScope
     edit_scope: DataScope
     rules: list[RoleDataScopeRuleRead] = Field(default_factory=list)
+
+
+class RoleGrantResponse(BaseModel):
+    role_id: SnowflakeId
+    dimension: str
+    synced: bool | None = None
+    skipped: bool = False
 
 
 class RolePermissionAndDataScopeRead(BaseModel):

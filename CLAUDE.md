@@ -142,7 +142,7 @@ backend/
   - _Anti-Pattern_: 在 `core/` 中导入 `modules.audit.domain.entities`。
 - **应用装配层独立**: `app_setup/` 负责应用实例装配、路由注册、生命周期与后台任务治理；`main.py` 只作为最小启动入口，禁止继续堆积应用装配细节。
 - **内置管理模块命名**: 后台模板内置的用户、角色、菜单、接口权限、数据权限等管理能力统一放在 `modules/admin/` 中，后续不要继续使用 `access_control` 作为模块名。
-- **权限运行域独立**: `modules/iam/` 负责权限运行时能力，包括 `IPermissionChecker`、`IPermissionManager` 的实现、Casbin Enforcer 适配与权限投影；业务模块不得直接依赖 `core.casbin.*` 或具体 Enforcer。
+- **权限运行域独立**: `modules/iam/` 负责权限运行时能力，包括 `IPermissionChecker`、`IPermissionManager` 的实现、Casbin Enforcer 适配与权限投影；业务模块不得直接依赖 Casbin 具体实现或 Enforcer。
 - **业务模块自包含**: 每个业务模块应遵循 DDD 分层结构，包含 `domain` (实体), `application` (服务), `infra` (仓储实现), `api` (接口)。
 - **职责分离**:
   - **Infrastructure Layer**: 负责所有 I/O 操作（数据库读写、外部 API 调用）。禁止在 Controller 或 Utility 中直接操作 DB Session。
@@ -152,7 +152,7 @@ backend/
   - **Application Contracts**: 应用层输入模型统一定义在 `application/contracts.py` 中；`application/services.py` **禁止**依赖 `api/v1/schemas.py`。如果接口层需要复用应用层输入模型，可以在 `api/v1/schemas.py` 中导入或再导出。
   - **API Schema 职责**: `api/v1/schemas.py` 负责请求/响应模型组织与对外接口表达；响应模型、展示模型保留在 API 层，请求契约和应用层输入模型优先放到 `application/contracts.py`。
   - **共享身份抽象**: 业务模块获取当前登录用户时，优先依赖 `common/auth/identity.py` 中的 `CurrentPrincipal`；除 `admin` 模块自身外，禁止将 `modules.admin.domain.entities.User` 作为跨模块共享身份模型。
-  - **权限 Port 约束**: 业务模块做 API 权限校验时，必须依赖 `IPermissionChecker`；`admin` 配置域做权限投影与同步时，必须依赖 `IPermissionManager`；数据权限必须依赖 `IDataScopeResolver`。禁止新增模块直接依赖 `core.casbin.enforcer` 或 Casbin API。
+  - **权限 Port 约束**: 业务模块做 API 权限校验时，必须依赖 `IPermissionChecker`；`admin` 配置域做权限投影与同步时，必须依赖 `IPermissionManager`；数据权限必须依赖 `IDataScopeResolver`。禁止新增模块直接依赖 Casbin API 或具体 Enforcer。
   - **装配层权限依赖**: 共享的当前用户解析、权限校验和数据权限 Provider 统一通过 `app_setup/auth_dependencies.py` 与 `app_setup/permission_providers.py` 暴露；业务模块不得跨模块复用其他业务模块的 `api/dependencies.py`。
 
 ### 3. 数据库规范（手工补充）

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 from pydantic_core import PydanticCustomError
 
 from common.types import SnowflakeId
@@ -60,18 +60,3 @@ class DataScopeRuleUpsert(BaseModel):
         if isinstance(value, str):
             return value.strip().upper()
         return value
-
-
-class RoleGrantResponse(BaseModel):
-    role_id: SnowflakeId
-    dimension: str
-    synced: bool | None = None
-    skipped: bool = False
-
-
-class RoleApiGrantRequest(BaseModel):
-    api_permission_ids: list[SnowflakeId] = Field(default_factory=list)
-
-
-class RoleDataScopeGrantRequest(BaseModel):
-    data_scope_rules: list[DataScopeRuleUpsert] = Field(default_factory=list)

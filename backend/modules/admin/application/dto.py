@@ -59,6 +59,14 @@ class RoleDataScopeListDTO:
 
 
 @dataclass(frozen=True)
+class RoleGrantResultDTO:
+    role_id: int
+    dimension: str
+    synced: bool | None = None
+    skipped: bool = False
+
+
+@dataclass(frozen=True)
 class GlobalMenuPermissionListDTO:
     menus: list[RoleMenuItemDTO] = field(default_factory=list)
 

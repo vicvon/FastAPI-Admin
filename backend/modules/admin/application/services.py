@@ -16,7 +16,6 @@ from core.security import get_password_hash, verify_password
 from modules.admin.application.contracts import (
     DataScopeRuleUpsert,
     RoleCreate,
-    RoleGrantResponse,
     RoleUpdate,
     UserCreate,
     UserUpdate,
@@ -29,6 +28,7 @@ from modules.admin.application.dto import (
     RoleApiGroupDTO,
     RoleApiPermissionDTO,
     RoleApiPermissionListDTO,
+    RoleGrantResultDTO,
     RoleDataScopeGroupDTO,
     RoleDataScopeListDTO,
     RoleDataScopeRuleDTO,
@@ -587,7 +587,7 @@ class RolePermissionApplicationService:
         role_id: int,
         api_permission_ids: list[int],
         operator_id: int,
-    ) -> RoleGrantResponse:
+    ) -> RoleGrantResultDTO:
         role = await self.roles.get(role_id)
         if role is None or role.id is None:
             raise ValueError("角色不存在")
@@ -610,13 +610,13 @@ class RolePermissionApplicationService:
                     and last_job.id is not None
                 ):
                     retried = await self.retry_failed_grant_job(last_job.id)
-                    return RoleGrantResponse(
+                    return RoleGrantResultDTO(
                         role_id=last_job.role_id,
                         dimension="api",
                         synced=retried.synced,
                         skipped=False,
                     )
-                return RoleGrantResponse(
+                return RoleGrantResultDTO(
                     role_id=last_job.role_id,
                     dimension="api",
                     synced=last_job.synced,
@@ -661,7 +661,7 @@ class RolePermissionApplicationService:
                 job.last_error = str(exc)
                 await self.grant_jobs.update(job)
 
-            return RoleGrantResponse(
+            return RoleGrantResultDTO(
                 role_id=role_id,
                 dimension="api",
                 synced=job.synced,
@@ -674,7 +674,7 @@ class RolePermissionApplicationService:
         role_id: int,
         data_scope_rules: list[DataScopeRuleUpsert],
         operator_id: int,
-    ) -> RoleGrantResponse:
+    ) -> RoleGrantResultDTO:
         role = await self.roles.get(role_id)
         if role is None or role.id is None:
             raise ValueError("角色不存在")
@@ -704,7 +704,7 @@ class RolePermissionApplicationService:
                 role_id=role_id, data_scope_rules=current_normalized_scope_rules
             )
             if current_fingerprint == fingerprint:
-                return RoleGrantResponse(
+                return RoleGrantResultDTO(
                     role_id=role_id,
                     dimension="scope",
                     synced=None,
@@ -729,7 +729,7 @@ class RolePermissionApplicationService:
                 operator_id,
                 len(scope_rule_entities),
             )
-            return RoleGrantResponse(
+            return RoleGrantResultDTO(
                 role_id=role_id,
                 dimension="scope",
                 synced=None,
@@ -805,12 +805,12 @@ class RolePermissionApplicationService:
             role_id=role.id, data_scope_groups=data_scope_groups
         )
 
-    async def retry_failed_grant_job(self, job_id: int) -> RoleGrantResponse:
+    async def retry_failed_grant_job(self, job_id: int) -> RoleGrantResultDTO:
         job = await self.grant_jobs.get(job_id)
         if job is None:
             raise ValueError("Grant job not found")
         if job.status != RoleGrantJobStatus.SYNC_FAILED:
-            return RoleGrantResponse(
+            return RoleGrantResultDTO(
                 role_id=job.role_id, dimension="api", synced=job.synced
             )
         latest = await self.grant_jobs.find_latest_by_role_id(job.role_id)
@@ -821,7 +821,11 @@ class RolePermissionApplicationService:
                 None if latest.id is None else f"SUPERSEDED_BY_NEWER_JOB:{latest.id}"
             )
             await self.grant_jobs.update(job)
-            return RoleGrantResponse(role_id=job.role_id, dimension="api", synced=True)
+            return RoleGrantResultDTO(
+                role_id=job.role_id,
+                dimension="api",
+                synced=True,
+            )
         try:
             if self.permission_manager is None:
                 raise RuntimeError("Permission manager is not configured")
@@ -835,7 +839,7 @@ class RolePermissionApplicationService:
             job.synced = False
             job.last_error = str(exc)
             await self.grant_jobs.update(job)
-        return RoleGrantResponse(
+        return RoleGrantResultDTO(
             role_id=job.role_id, dimension="api", synced=job.synced
         )
 

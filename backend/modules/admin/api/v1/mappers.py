@@ -9,12 +9,14 @@ from modules.admin.api.v1.schemas import (
     RoleDataScopeGroupRead,
     RoleDataScopeListRead,
     RoleDataScopeRuleRead,
+    RoleGrantResponse,
     RoleMenuItemRead,
 )
 from modules.admin.application.dto import (
     GlobalApiPermissionListDTO,
     GlobalDataScopeListDTO,
     GlobalMenuPermissionListDTO,
+    RoleGrantResultDTO,
     RoleApiPermissionListDTO,
     RoleDataScopeListDTO,
     RoleMenuItemDTO,
@@ -76,6 +78,15 @@ def to_role_data_scope_list_read(dto: RoleDataScopeListDTO) -> RoleDataScopeList
             )
             for group in dto.data_scope_groups
         ],
+    )
+
+
+def to_role_grant_response(dto: RoleGrantResultDTO) -> RoleGrantResponse:
+    return RoleGrantResponse(
+        role_id=dto.role_id,
+        dimension=dto.dimension,
+        synced=dto.synced,
+        skipped=dto.skipped,
     )
 
 

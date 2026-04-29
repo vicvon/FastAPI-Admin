@@ -94,6 +94,7 @@ uv run pytest tests/unit
 如果继续基于模板扩展新业务模块，请先阅读：
 
 - [CLAUDE.md](file:///Users/fengjun/code/python/FastAPI-Admin/CLAUDE.md)
+- [development_guide.md](file:///Users/fengjun/code/python/FastAPI-Admin/documentation/development_guide.md)
 - [permission_integration_guide.md](file:///Users/fengjun/code/python/FastAPI-Admin/documentation/permission_integration_guide.md)
 
 ## 权限接入约束

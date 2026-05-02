@@ -1,10 +1,19 @@
 # 项目介绍
 
-这是一个基于FastAPI+Vue3的后台管理系统模板，基于此项目可以快速搭建后台管理系统，该项目以内置 `admin` 管理模块提供基于RBAC模型的权限管理功能。
+这是一个基于FastAPI+React+Tailwind的后台管理系统模板，基于此项目可以快速搭建后台管理系统，该项目以内置 `admin` 管理模块提供基于RBAC模型的权限管理功能。
 
 ## 技术栈
 
-- Python 3.11+ + FastAPI, Pydantic, SQLAlchemy (or SQLModel), Alembic, Casbin, casbin\_sqlalchemy\_adapter
+#### 后端
+
+- Python 3.11+ + FastAPI, Pydantic, SQLAlchemy (or SQLModel), Alembic, Casbin, casbin_sqlalchemy_adapter
+
+#### 前端
+
+- React, node 22.21.1, pnpm
+
+#### 中间件
+
 - redis、mysql
 
 ## 相关命令
@@ -139,21 +148,21 @@ backend/
 ### 2. 模块化与分层原则 (DDD)
 
 - **Core 层纯净性**: `core/` 目录存放通用的基础设施和框架代码，**严禁**依赖具体的 `modules/` 业务代码。
-  - _Anti-Pattern_: 在 `core/` 中导入 `modules.audit.domain.entities`。
+    - _Anti-Pattern_: 在 `core/` 中导入 `modules.audit.domain.entities`。
 - **应用装配层独立**: `app_setup/` 负责应用实例装配、路由注册、生命周期与后台任务治理；`main.py` 只作为最小启动入口，禁止继续堆积应用装配细节。
 - **内置管理模块命名**: 后台模板内置的用户、角色、菜单、接口权限、数据权限等管理能力统一放在 `modules/admin/` 中，后续不要继续使用 `access_control` 作为模块名。
 - **权限运行域独立**: `modules/iam/` 负责权限运行时能力，包括 `IPermissionChecker`、`IPermissionManager` 的实现、Casbin Enforcer 适配与权限投影；业务模块不得直接依赖 Casbin 具体实现或 Enforcer。
 - **业务模块自包含**: 每个业务模块应遵循 DDD 分层结构，包含 `domain` (实体), `application` (服务), `infra` (仓储实现), `api` (接口)。
 - **职责分离**:
-  - **Infrastructure Layer**: 负责所有 I/O 操作（数据库读写、外部 API 调用）。禁止在 Controller 或 Utility 中直接操作 DB Session。
-  - **Application Layer**: 负责业务流程编排。
-  - **Domain Layer**: 负责核心业务规则和实体定义。
-  - **Repository Pattern**: 必须在 `domain/repositories.py` 中定义 Repository 抽象接口（继承 `abc.ABC`），并在 `infra/repositories.py` 中实现具体逻辑。应用层服务 (`application/services.py`) 必须依赖 Domain 层接口，严禁直接依赖 Infra 层实现。
-  - **Application Contracts**: 应用层输入模型统一定义在 `application/contracts.py` 中；`application/services.py` **禁止**依赖 `api/v1/schemas.py`。如果接口层需要复用应用层输入模型，可以在 `api/v1/schemas.py` 中导入或再导出。
-  - **API Schema 职责**: `api/v1/schemas.py` 负责请求/响应模型组织与对外接口表达；响应模型、展示模型保留在 API 层，请求契约和应用层输入模型优先放到 `application/contracts.py`。
-  - **共享身份抽象**: 业务模块获取当前登录用户时，优先依赖 `common/auth/identity.py` 中的 `CurrentPrincipal`；除 `admin` 模块自身外，禁止将 `modules.admin.domain.entities.User` 作为跨模块共享身份模型。
-  - **权限 Port 约束**: 业务模块做 API 权限校验时，必须依赖 `IPermissionChecker`；`admin` 配置域做权限投影与同步时，必须依赖 `IPermissionManager`；数据权限必须依赖 `IDataScopeResolver`。禁止新增模块直接依赖 Casbin API 或具体 Enforcer。
-  - **装配层权限依赖**: 共享的当前用户解析、权限校验和数据权限 Provider 统一通过 `app_setup/auth_dependencies.py` 与 `app_setup/permission_providers.py` 暴露；业务模块不得跨模块复用其他业务模块的 `api/dependencies.py`。
+    - **Infrastructure Layer**: 负责所有 I/O 操作（数据库读写、外部 API 调用）。禁止在 Controller 或 Utility 中直接操作 DB Session。
+    - **Application Layer**: 负责业务流程编排。
+    - **Domain Layer**: 负责核心业务规则和实体定义。
+    - **Repository Pattern**: 必须在 `domain/repositories.py` 中定义 Repository 抽象接口（继承 `abc.ABC`），并在 `infra/repositories.py` 中实现具体逻辑。应用层服务 (`application/services.py`) 必须依赖 Domain 层接口，严禁直接依赖 Infra 层实现。
+    - **Application Contracts**: 应用层输入模型统一定义在 `application/contracts.py` 中；`application/services.py` **禁止**依赖 `api/v1/schemas.py`。如果接口层需要复用应用层输入模型，可以在 `api/v1/schemas.py` 中导入或再导出。
+    - **API Schema 职责**: `api/v1/schemas.py` 负责请求/响应模型组织与对外接口表达；响应模型、展示模型保留在 API 层，请求契约和应用层输入模型优先放到 `application/contracts.py`。
+    - **共享身份抽象**: 业务模块获取当前登录用户时，优先依赖 `common/auth/identity.py` 中的 `CurrentPrincipal`；除 `admin` 模块自身外，禁止将 `modules.admin.domain.entities.User` 作为跨模块共享身份模型。
+    - **权限 Port 约束**: 业务模块做 API 权限校验时，必须依赖 `IPermissionChecker`；`admin` 配置域做权限投影与同步时，必须依赖 `IPermissionManager`；数据权限必须依赖 `IDataScopeResolver`。禁止新增模块直接依赖 Casbin API 或具体 Enforcer。
+    - **装配层权限依赖**: 共享的当前用户解析、权限校验和数据权限 Provider 统一通过 `app_setup/auth_dependencies.py` 与 `app_setup/permission_providers.py` 暴露；业务模块不得跨模块复用其他业务模块的 `api/dependencies.py`。
 
 ### 3. 数据库规范（手工补充）
 
@@ -167,14 +176,14 @@ backend/
 
 - **全栈异步**: 项目强制使用 Python 的 `asyncio` 异步编程模型以提升高并发性能。
 - **数据库交互**:
-  - 必须使用 `sqlmodel.ext.asyncio.session.AsyncSession` (基于 SQLAlchemy AsyncIO) 进行所有数据库操作。
-  - 查询优先使用 `session.exec(select(...))`，避免使用 `session.execute(select(...)).scalars()` 这类旧写法。
-  - **严禁**使用同步的 `Session` 或阻塞式 DB 驱动。
-  - 数据库初始化脚本 (`init_db.py`) 也必须异步执行。
+    - 必须使用 `sqlmodel.ext.asyncio.session.AsyncSession` (基于 SQLAlchemy AsyncIO) 进行所有数据库操作。
+    - 查询优先使用 `session.exec(select(...))`，避免使用 `session.execute(select(...)).scalars()` 这类旧写法。
+    - **严禁**使用同步的 `Session` 或阻塞式 DB 驱动。
+    - 数据库初始化脚本 (`init_db.py`) 也必须异步执行。
 - **Web 接口**: 所有 FastAPI 路由处理函数 (`router` methods) 必须定义为 `async def`。
 - **分层实现**:
-  - **Repository**: 接口定义和实现类中的方法必须为 `async def`。
-  - **Service**: 涉及 I/O 操作的业务逻辑方法必须为 `async def` 并 `await` 仓储层调用。
+    - **Repository**: 接口定义和实现类中的方法必须为 `async def`。
+    - **Service**: 涉及 I/O 操作的业务逻辑方法必须为 `async def` 并 `await` 仓储层调用。
 - **其他 I/O**: Redis 操作、HTTP 请求等外部调用均需使用异步客户端（如 `aioredis`, `httpx`）。
 
 ### 5. 配置模板同步规范
@@ -232,6 +241,6 @@ backend/
 ### 11.第三方依赖使用规范
 
 - **Pydantic**：
-  - Pydantic使用V2.0+版本, 不要使用在V2.0中已经废弃**deprecated**的特性
+    - Pydantic使用V2.0+版本, 不要使用在V2.0中已经废弃**deprecated**的特性
 
 <!-- MANUAL ADDITIONS END -->

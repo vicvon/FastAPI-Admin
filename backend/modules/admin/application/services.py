@@ -28,10 +28,10 @@ from modules.admin.application.dto import (
     RoleApiGroupDTO,
     RoleApiPermissionDTO,
     RoleApiPermissionListDTO,
-    RoleGrantResultDTO,
     RoleDataScopeGroupDTO,
     RoleDataScopeListDTO,
     RoleDataScopeRuleDTO,
+    RoleGrantResultDTO,
     RoleMenuItemDTO,
 )
 from modules.admin.domain.entities import (

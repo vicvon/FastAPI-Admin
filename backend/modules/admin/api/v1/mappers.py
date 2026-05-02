@@ -16,9 +16,9 @@ from modules.admin.application.dto import (
     GlobalApiPermissionListDTO,
     GlobalDataScopeListDTO,
     GlobalMenuPermissionListDTO,
-    RoleGrantResultDTO,
     RoleApiPermissionListDTO,
     RoleDataScopeListDTO,
+    RoleGrantResultDTO,
     RoleMenuItemDTO,
 )
 

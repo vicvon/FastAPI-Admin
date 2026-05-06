@@ -1,13 +1,27 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import JSON, BigInteger, Boolean, Column, Index, Integer, String
+from sqlalchemy import (
+    JSON,
+    BigInteger,
+    Boolean,
+    DateTime,
+    Enum,
+    Index,
+    Integer,
+    String,
+    text,
+)
 from sqlmodel import Field
 
 from core.base import Base
 from utils.snowflake import next_snowflake_id
+
+
+def local_now() -> datetime:
+    return datetime.now()
 
 
 class PermissionType(StrEnum):
@@ -37,12 +51,20 @@ class UserRole(Base, table=True):
     )
 
     user_id: int = Field(
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=False)
+        primary_key=True,
+        sa_type=BigInteger,
+        sa_column_kwargs={"autoincrement": False},
     )
     role_id: int = Field(
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=False)
+        primary_key=True,
+        sa_type=BigInteger,
+        sa_column_kwargs={"autoincrement": False},
     )
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC).astimezone())
+    created_at: datetime = Field(
+        default_factory=local_now,
+        nullable=False,
+        sa_type=DateTime(timezone=False),
+    )
 
 
 class RolePermission(Base, table=True):
@@ -53,10 +75,14 @@ class RolePermission(Base, table=True):
     )
 
     role_id: int = Field(
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=False)
+        primary_key=True,
+        sa_type=BigInteger,
+        sa_column_kwargs={"autoincrement": False},
     )
     permission_id: int = Field(
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=False)
+        primary_key=True,
+        sa_type=BigInteger,
+        sa_column_kwargs={"autoincrement": False},
     )
 
 
@@ -70,11 +96,17 @@ class RoleMenuPermission(Base, table=True):
 
     id: int = Field(
         default_factory=next_snowflake_id,
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=False),
+        primary_key=True,
+        sa_type=BigInteger,
+        sa_column_kwargs={"autoincrement": False},
     )
-    role_id: int = Field(sa_column=Column(BigInteger, nullable=False))
-    menu_permission_id: int = Field(sa_column=Column(BigInteger, nullable=False))
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC).astimezone())
+    role_id: int = Field(nullable=False, sa_type=BigInteger)
+    menu_permission_id: int = Field(nullable=False, sa_type=BigInteger)
+    created_at: datetime = Field(
+        default_factory=local_now,
+        nullable=False,
+        sa_type=DateTime(timezone=False),
+    )
 
 
 class User(Base, table=True):
@@ -82,16 +114,37 @@ class User(Base, table=True):
 
     id: int = Field(
         default_factory=next_snowflake_id,
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=False),
+        primary_key=True,
+        sa_type=BigInteger,
+        sa_column_kwargs={"autoincrement": False},
     )
     username: str = Field(index=True, unique=True, max_length=50)
     email: str = Field(index=True, unique=True, max_length=255)
     hashed_password: str = Field(max_length=255)
-    is_active: bool = Field(default=True)
-    token_version: int = Field(default=0)
+    is_active: bool = Field(
+        default=True,
+        nullable=False,
+        sa_type=Boolean,
+        sa_column_kwargs={"server_default": text("1")},
+    )
+    token_version: int = Field(
+        default=0,
+        nullable=False,
+        sa_type=Integer,
+        sa_column_kwargs={"server_default": text("0")},
+    )
     full_name: str | None = Field(default=None, max_length=100)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC).astimezone())
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC).astimezone())
+    created_at: datetime = Field(
+        default_factory=local_now,
+        nullable=False,
+        sa_type=DateTime(timezone=False),
+    )
+    updated_at: datetime = Field(
+        default_factory=local_now,
+        nullable=False,
+        sa_type=DateTime(timezone=False),
+        sa_column_kwargs={"onupdate": local_now},
+    )
 
 
 class Role(Base, table=True):
@@ -99,7 +152,9 @@ class Role(Base, table=True):
 
     id: int = Field(
         default_factory=next_snowflake_id,
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=False),
+        primary_key=True,
+        sa_type=BigInteger,
+        sa_column_kwargs={"autoincrement": False},
     )
     name: str = Field(index=True, max_length=50)
     code: str = Field(
@@ -109,12 +164,29 @@ class Role(Base, table=True):
         description="Casbin中的角色标识, 如 role:admin",
     )
     description: str | None = Field(default=None, max_length=255)
-    is_system: bool = Field(default=False, description="是否系统内置角色")
-    parent_role_id: int | None = Field(
-        default=None, sa_column=Column(BigInteger), description="父角色ID"
+    is_system: bool = Field(
+        default=False,
+        nullable=False,
+        sa_type=Boolean,
+        sa_column_kwargs={"server_default": text("0")},
+        description="是否系统内置角色",
     )
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC).astimezone())
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC).astimezone())
+    parent_role_id: int | None = Field(
+        default=None,
+        sa_type=BigInteger,
+        description="父角色ID",
+    )
+    created_at: datetime = Field(
+        default_factory=local_now,
+        nullable=False,
+        sa_type=DateTime(timezone=False),
+    )
+    updated_at: datetime = Field(
+        default_factory=local_now,
+        nullable=False,
+        sa_type=DateTime(timezone=False),
+        sa_column_kwargs={"onupdate": local_now},
+    )
 
 
 class MenuPermission(Base, table=True):
@@ -122,17 +194,38 @@ class MenuPermission(Base, table=True):
 
     id: int = Field(
         default_factory=next_snowflake_id,
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=False),
+        primary_key=True,
+        sa_type=BigInteger,
+        sa_column_kwargs={"autoincrement": False},
     )
     name: str = Field(max_length=100)
-    parent_id: int | None = Field(default=None, sa_column=Column(BigInteger))
+    parent_id: int | None = Field(default=None, sa_type=BigInteger)
     path: str | None = Field(default=None, max_length=255)
     component: str | None = Field(default=None, max_length=255)
     icon: str | None = Field(default=None, max_length=100)
-    sort_order: int = Field(default=0)
-    status: str = Field(default="ENABLED", max_length=20)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC).astimezone())
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC).astimezone())
+    sort_order: int = Field(
+        default=0,
+        nullable=False,
+        sa_type=Integer,
+        sa_column_kwargs={"server_default": text("0")},
+    )
+    status: str = Field(
+        default="ENABLED",
+        nullable=False,
+        sa_type=String(20),
+        sa_column_kwargs={"server_default": text("'ENABLED'")},
+    )
+    created_at: datetime = Field(
+        default_factory=local_now,
+        nullable=False,
+        sa_type=DateTime(timezone=False),
+    )
+    updated_at: datetime = Field(
+        default_factory=local_now,
+        nullable=False,
+        sa_type=DateTime(timezone=False),
+        sa_column_kwargs={"onupdate": local_now},
+    )
 
 
 class ApiPermission(Base, table=True):
@@ -140,15 +233,31 @@ class ApiPermission(Base, table=True):
 
     id: int = Field(
         default_factory=next_snowflake_id,
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=False),
+        primary_key=True,
+        sa_type=BigInteger,
+        sa_column_kwargs={"autoincrement": False},
     )
     name: str = Field(max_length=100)
     group_name: str | None = Field(default=None, max_length=100)
     api_path: str = Field(max_length=255)
     method: str = Field(max_length=20)
-    status: str = Field(default="ENABLED", max_length=20)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC).astimezone())
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC).astimezone())
+    status: str = Field(
+        default="ENABLED",
+        nullable=False,
+        sa_type=String(20),
+        sa_column_kwargs={"server_default": text("'ENABLED'")},
+    )
+    created_at: datetime = Field(
+        default_factory=local_now,
+        nullable=False,
+        sa_type=DateTime(timezone=False),
+    )
+    updated_at: datetime = Field(
+        default_factory=local_now,
+        nullable=False,
+        sa_type=DateTime(timezone=False),
+        sa_column_kwargs={"onupdate": local_now},
+    )
 
 
 class RoleDataScopeRule(Base, table=True):
@@ -160,15 +269,30 @@ class RoleDataScopeRule(Base, table=True):
 
     id: int = Field(
         default_factory=next_snowflake_id,
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=False),
+        primary_key=True,
+        sa_type=BigInteger,
+        sa_column_kwargs={"autoincrement": False},
     )
-    role_id: int = Field(sa_column=Column(BigInteger, nullable=False))
-    resource_type: str = Field(sa_column=Column(String(64), nullable=False))
-    view_scope: DataScope = Field(default=DataScope.SELF)
-    edit_scope: DataScope = Field(default=DataScope.SELF)
-    custom_rule_id: int | None = Field(default=None, sa_column=Column(BigInteger))
+    role_id: int = Field(nullable=False, sa_type=BigInteger)
+    resource_type: str = Field(max_length=64, nullable=False)
+    view_scope: DataScope = Field(
+        default=DataScope.SELF,
+        nullable=False,
+        sa_type=Enum(DataScope, native_enum=False),
+        sa_column_kwargs={"server_default": text("'SELF'")},
+    )
+    edit_scope: DataScope = Field(
+        default=DataScope.SELF,
+        nullable=False,
+        sa_type=Enum(DataScope, native_enum=False),
+        sa_column_kwargs={"server_default": text("'SELF'")},
+    )
+    custom_rule_id: int | None = Field(default=None, sa_type=BigInteger)
     is_active: bool = Field(
-        default=True, sa_column=Column(Boolean, nullable=False, default=True)
+        default=True,
+        nullable=False,
+        sa_type=Boolean,
+        sa_column_kwargs={"server_default": text("1")},
     )
 
 
@@ -181,15 +305,30 @@ class UserDataScopeRule(Base, table=True):
 
     id: int = Field(
         default_factory=next_snowflake_id,
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=False),
+        primary_key=True,
+        sa_type=BigInteger,
+        sa_column_kwargs={"autoincrement": False},
     )
-    user_id: int = Field(sa_column=Column(BigInteger, nullable=False))
-    resource_type: str = Field(sa_column=Column(String(64), nullable=False))
-    view_scope: DataScope = Field(default=DataScope.SELF)
-    edit_scope: DataScope = Field(default=DataScope.SELF)
-    custom_rule_id: int | None = Field(default=None, sa_column=Column(BigInteger))
+    user_id: int = Field(nullable=False, sa_type=BigInteger)
+    resource_type: str = Field(max_length=64, nullable=False)
+    view_scope: DataScope = Field(
+        default=DataScope.SELF,
+        nullable=False,
+        sa_type=Enum(DataScope, native_enum=False),
+        sa_column_kwargs={"server_default": text("'SELF'")},
+    )
+    edit_scope: DataScope = Field(
+        default=DataScope.SELF,
+        nullable=False,
+        sa_type=Enum(DataScope, native_enum=False),
+        sa_column_kwargs={"server_default": text("'SELF'")},
+    )
+    custom_rule_id: int | None = Field(default=None, sa_type=BigInteger)
     is_active: bool = Field(
-        default=True, sa_column=Column(Boolean, nullable=False, default=True)
+        default=True,
+        nullable=False,
+        sa_type=Boolean,
+        sa_column_kwargs={"server_default": text("1")},
     )
 
 
@@ -202,20 +341,50 @@ class RoleGrantJob(Base, table=True):
 
     id: int = Field(
         default_factory=next_snowflake_id,
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=False),
+        primary_key=True,
+        sa_type=BigInteger,
+        sa_column_kwargs={"autoincrement": False},
     )
-    role_id: int = Field(sa_column=Column(BigInteger, nullable=False))
-    request_id: str = Field(sa_column=Column(String(256), nullable=False))
+    role_id: int = Field(nullable=False, sa_type=BigInteger)
+    request_id: str = Field(max_length=256, nullable=False)
     api_permission_ids: list[int] = Field(
-        default_factory=list, sa_column=Column(JSON, nullable=False)
+        default_factory=list,
+        nullable=False,
+        sa_type=JSON,
     )
     data_scope_rules: list[dict] = Field(
-        default_factory=list, sa_column=Column(JSON, nullable=False)
+        default_factory=list,
+        nullable=False,
+        sa_type=JSON,
     )
-    operator_id: int = Field(sa_column=Column(BigInteger, nullable=False))
-    status: RoleGrantJobStatus = Field(default=RoleGrantJobStatus.APPLYING)
-    synced: bool = Field(default=False, sa_column=Column(Boolean, nullable=False))
-    retry_count: int = Field(default=0, sa_column=Column(Integer, nullable=False))
-    last_error: str | None = Field(default=None, sa_column=Column(String(1024)))
-    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC).astimezone())
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC).astimezone())
+    operator_id: int = Field(nullable=False, sa_type=BigInteger)
+    status: RoleGrantJobStatus = Field(
+        default=RoleGrantJobStatus.APPLYING,
+        nullable=False,
+        sa_type=Enum(RoleGrantJobStatus, native_enum=False),
+        sa_column_kwargs={"server_default": text("'APPLYING'")},
+    )
+    synced: bool = Field(
+        default=False,
+        nullable=False,
+        sa_type=Boolean,
+        sa_column_kwargs={"server_default": text("0")},
+    )
+    retry_count: int = Field(
+        default=0,
+        nullable=False,
+        sa_type=Integer,
+        sa_column_kwargs={"server_default": text("0")},
+    )
+    last_error: str | None = Field(default=None, max_length=1024)
+    created_at: datetime = Field(
+        default_factory=local_now,
+        nullable=False,
+        sa_type=DateTime(timezone=False),
+    )
+    updated_at: datetime = Field(
+        default_factory=local_now,
+        nullable=False,
+        sa_type=DateTime(timezone=False),
+        sa_column_kwargs={"onupdate": local_now},
+    )

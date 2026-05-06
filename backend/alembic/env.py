@@ -45,6 +45,7 @@ def run_migrations_offline() -> None:
         url=url,
         target_metadata=target_metadata,
         include_object=_include_object,
+        compare_server_default=True,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
@@ -59,6 +60,7 @@ def do_run_migrations(connection):
         connection=connection,
         target_metadata=target_metadata,
         include_object=_include_object,
+        compare_server_default=True,
     )
 
     with context.begin_transaction():

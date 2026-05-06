@@ -171,6 +171,10 @@ backend/
 - 数据库迁移脚本使用alembic进行管理，严禁使用`alembic stamp`命令只修改`alembic_version`表中的版本ID，导致无法执行数据库变动的操作
 - 数据库迁移脚本的生成必须使用`alembic revision`命令生成，严禁手动修改版本ID，破坏版本链路，具体命令参考alembic skill
 - 严禁自动执行`alembic upgrade head`命令
+- **SQLModel 实体建模约束**:
+    - 实体字段定义默认优先使用 `Field(...)`；需要显式指定底层数据库类型时使用 `Field(..., sa_type=...)`；需要补充列级参数（如 `autoincrement=False`、`server_default`、`onupdate` 等）时优先使用 `Field(..., sa_column_kwargs={...})`，避免直接下沉为完整 `sa_column=Column(...)` 写法。
+    - 禁止在同一个字段上无必要地混用 `Field` 参数、`sa_type`、`sa_column_kwargs` 与 `sa_column=Column(...)` 重复表达同一语义；能由 `Field`、`sa_type`、`sa_column_kwargs` 清晰表达的约束，不要改写成完整 SQLAlchemy 列定义。
+    - 时间字段统一保存本机时间，默认使用 `datetime.now()` 生成值；普通时间字段优先使用 `sa_type=DateTime(timezone=False)`，需要自动更新时间时使用 `sa_column_kwargs={"onupdate": local_now}` 明确表达。
 
 ### 4. 异步IO规范 (Async IO)
 

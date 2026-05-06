@@ -10,7 +10,7 @@ from pathlib import Path
 
 # revision identifiers, used by Alembic.
 revision = 'd0d6403df0d7'
-down_revision = '44dbcfaa6706'
+down_revision = '21f977a1e758'
 branch_labels = None
 depends_on = None
 

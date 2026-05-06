@@ -1,12 +1,25 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
 
-from sqlalchemy import VARCHAR, BigInteger, Boolean, Column, Index, Integer, Text
+from sqlalchemy import (
+    VARCHAR,
+    BigInteger,
+    Boolean,
+    DateTime,
+    Index,
+    Integer,
+    Text,
+    text,
+)
 from sqlmodel import Field
 
 from core.base import Base
 from utils.snowflake import next_snowflake_id
+
+
+def local_now() -> datetime:
+    return datetime.now()
 
 
 class Label(Base, table=True):
@@ -21,68 +34,90 @@ class Label(Base, table=True):
 
     id: int = Field(
         default_factory=next_snowflake_id,
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=False),
+        primary_key=True,
+        sa_type=BigInteger,
+        sa_column_kwargs={"autoincrement": False},
         description="标签ID (Snowflake)",
     )
 
     namespace: str = Field(
         default="default",
-        sa_column=Column(VARCHAR(32), nullable=False),
+        nullable=False,
+        sa_type=VARCHAR(32),
+        sa_column_kwargs={"server_default": text("'default'")},
         description="命名空间(当前版本固定 default)",
     )
     name: str = Field(
         max_length=128,
-        sa_column=Column(VARCHAR(128), nullable=False),
+        nullable=False,
+        sa_type=VARCHAR(128),
         description="标签名称",
     )
 
     level: int = Field(
-        sa_column=Column(Integer, nullable=False),
+        nullable=False,
         description="层级:1/2/3",
     )
     parent_id: int = Field(
         default=0,
-        sa_column=Column(BigInteger, nullable=False),
+        nullable=False,
+        sa_type=BigInteger,
+        sa_column_kwargs={"server_default": text("0")},
         description="父标签ID(一级为0)",
     )
     root_id: int = Field(
-        sa_column=Column(BigInteger, nullable=False),
+        nullable=False,
+        sa_type=BigInteger,
         description="一级标签ID",
     )
     path: str = Field(
         max_length=255,
-        sa_column=Column(VARCHAR(255), nullable=False),
+        nullable=False,
+        sa_type=VARCHAR(255),
         description="物化路径,如 /{root_id}/{level2_id}/{id}",
     )
 
     sort_order: int = Field(
         default=0,
-        sa_column=Column(Integer, nullable=False),
+        nullable=False,
+        sa_type=Integer,
+        sa_column_kwargs={"server_default": text("0")},
         description="同级排序,越小越靠前",
     )
     enabled: bool = Field(
         default=True,
-        sa_column=Column(Boolean, nullable=False),
+        nullable=False,
+        sa_type=Boolean,
+        sa_column_kwargs={"server_default": text("1")},
         description="是否启用",
     )
     description: str | None = Field(
         default=None,
-        sa_column=Column(Text),
+        sa_type=Text,
         description="描述",
     )
 
-    created_by: int = Field(sa_column=Column(BigInteger), description="创建人ID")
+    created_by: int = Field(sa_type=BigInteger, description="创建人ID")
     updated_by: int | None = Field(
         default=None,
-        sa_column=Column(BigInteger),
+        sa_type=BigInteger,
         description="更新人ID",
     )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC).astimezone(),
+        default_factory=local_now,
+        nullable=False,
+        sa_type=DateTime(timezone=False),
         description="创建时间",
     )
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC).astimezone(),
+        default_factory=local_now,
+        nullable=False,
+        sa_type=DateTime(timezone=False),
+        sa_column_kwargs={"onupdate": local_now},
         description="更新时间",
     )
-    deleted_at: datetime | None = Field(default=None, description="软删除时间")
+    deleted_at: datetime | None = Field(
+        default=None,
+        sa_type=DateTime(timezone=False),
+        description="软删除时间",
+    )

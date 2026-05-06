@@ -1,17 +1,18 @@
 """init_project
 
-Revision ID: 44dbcfaa6706
+Revision ID: 21f977a1e758
 Revises: 
-Create Date: 2026-04-16 10:17:54.753779
+Create Date: 2026-05-02 12:11:18.038004
 
 """
+from alembic import op
 import sqlalchemy as sa
 import sqlmodel
 
-from alembic import op
+
 
 # revision identifiers, used by Alembic.
-revision = '44dbcfaa6706'
+revision = '21f977a1e758'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -25,7 +26,7 @@ def upgrade() -> None:
     sa.Column('group_name', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=True),
     sa.Column('api_path', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
     sa.Column('method', sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
-    sa.Column('status', sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
+    sa.Column('status', sa.String(length=20), server_default=sa.text("'ENABLED'"), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id')
@@ -37,8 +38,8 @@ def upgrade() -> None:
     sa.Column('path', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=True),
     sa.Column('component', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=True),
     sa.Column('icon', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=True),
-    sa.Column('sort_order', sa.Integer(), nullable=False),
-    sa.Column('status', sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
+    sa.Column('sort_order', sa.Integer(), server_default=sa.text('0'), nullable=False),
+    sa.Column('status', sa.String(length=20), server_default=sa.text("'ENABLED'"), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id')
@@ -46,11 +47,11 @@ def upgrade() -> None:
     op.create_table('role_data_scope_rules',
     sa.Column('id', sa.BigInteger(), autoincrement=False, nullable=False),
     sa.Column('role_id', sa.BigInteger(), nullable=False),
-    sa.Column('resource_type', sa.String(length=64), nullable=False),
-    sa.Column('view_scope', sa.Enum('SELF', 'ALL', 'DEPT', 'DEPT_AND_SUB', 'CUSTOM', name='datascope'), nullable=False),
-    sa.Column('edit_scope', sa.Enum('SELF', 'ALL', 'DEPT', 'DEPT_AND_SUB', 'CUSTOM', name='datascope'), nullable=False),
+    sa.Column('resource_type', sqlmodel.sql.sqltypes.AutoString(length=64), nullable=False),
+    sa.Column('view_scope', sa.Enum('SELF', 'ALL', 'DEPT', 'DEPT_AND_SUB', 'CUSTOM', name='datascope', native_enum=False), server_default=sa.text("'SELF'"), nullable=False),
+    sa.Column('edit_scope', sa.Enum('SELF', 'ALL', 'DEPT', 'DEPT_AND_SUB', 'CUSTOM', name='datascope', native_enum=False), server_default=sa.text("'SELF'"), nullable=False),
     sa.Column('custom_rule_id', sa.BigInteger(), nullable=True),
-    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), server_default=sa.text('1'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index('ix_role_resource_active', 'role_data_scope_rules', ['role_id', 'resource_type', 'is_active'], unique=False)
@@ -58,14 +59,14 @@ def upgrade() -> None:
     op.create_table('role_grant_jobs',
     sa.Column('id', sa.BigInteger(), autoincrement=False, nullable=False),
     sa.Column('role_id', sa.BigInteger(), nullable=False),
-    sa.Column('request_id', sa.String(length=256), nullable=False),
+    sa.Column('request_id', sqlmodel.sql.sqltypes.AutoString(length=256), nullable=False),
     sa.Column('api_permission_ids', sa.JSON(), nullable=False),
     sa.Column('data_scope_rules', sa.JSON(), nullable=False),
     sa.Column('operator_id', sa.BigInteger(), nullable=False),
-    sa.Column('status', sa.Enum('APPLYING', 'SYNCED', 'SYNC_FAILED', name='rolegrantjobstatus'), nullable=False),
-    sa.Column('synced', sa.Boolean(), nullable=False),
-    sa.Column('retry_count', sa.Integer(), nullable=False),
-    sa.Column('last_error', sa.String(length=1024), nullable=True),
+    sa.Column('status', sa.Enum('APPLYING', 'SYNCED', 'SYNC_FAILED', name='rolegrantjobstatus', native_enum=False), server_default=sa.text("'APPLYING'"), nullable=False),
+    sa.Column('synced', sa.Boolean(), server_default=sa.text('0'), nullable=False),
+    sa.Column('retry_count', sa.Integer(), server_default=sa.text('0'), nullable=False),
+    sa.Column('last_error', sqlmodel.sql.sqltypes.AutoString(length=1024), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id')
@@ -94,7 +95,7 @@ def upgrade() -> None:
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(length=50), nullable=False),
     sa.Column('code', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=False),
     sa.Column('description', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=True),
-    sa.Column('is_system', sa.Boolean(), nullable=False),
+    sa.Column('is_system', sa.Boolean(), server_default=sa.text('0'), nullable=False),
     sa.Column('parent_role_id', sa.BigInteger(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
@@ -105,11 +106,11 @@ def upgrade() -> None:
     op.create_table('user_data_scope_rules',
     sa.Column('id', sa.BigInteger(), autoincrement=False, nullable=False),
     sa.Column('user_id', sa.BigInteger(), nullable=False),
-    sa.Column('resource_type', sa.String(length=64), nullable=False),
-    sa.Column('view_scope', sa.Enum('SELF', 'ALL', 'DEPT', 'DEPT_AND_SUB', 'CUSTOM', name='datascope'), nullable=False),
-    sa.Column('edit_scope', sa.Enum('SELF', 'ALL', 'DEPT', 'DEPT_AND_SUB', 'CUSTOM', name='datascope'), nullable=False),
+    sa.Column('resource_type', sqlmodel.sql.sqltypes.AutoString(length=64), nullable=False),
+    sa.Column('view_scope', sa.Enum('SELF', 'ALL', 'DEPT', 'DEPT_AND_SUB', 'CUSTOM', name='datascope', native_enum=False), server_default=sa.text("'SELF'"), nullable=False),
+    sa.Column('edit_scope', sa.Enum('SELF', 'ALL', 'DEPT', 'DEPT_AND_SUB', 'CUSTOM', name='datascope', native_enum=False), server_default=sa.text("'SELF'"), nullable=False),
     sa.Column('custom_rule_id', sa.BigInteger(), nullable=True),
-    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), server_default=sa.text('1'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index('ix_user_resource_active', 'user_data_scope_rules', ['user_id', 'resource_type', 'is_active'], unique=False)
@@ -127,8 +128,8 @@ def upgrade() -> None:
     sa.Column('username', sqlmodel.sql.sqltypes.AutoString(length=50), nullable=False),
     sa.Column('email', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
     sa.Column('hashed_password', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
-    sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('token_version', sa.Integer(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), server_default=sa.text('1'), nullable=False),
+    sa.Column('token_version', sa.Integer(), server_default=sa.text('0'), nullable=False),
     sa.Column('full_name', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),

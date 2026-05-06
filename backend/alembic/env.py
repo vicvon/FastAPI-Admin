@@ -20,6 +20,7 @@ if BASE_DIR not in sys.path:
 # 注意: 这里导入 modules.admin.domain.entities 替代 infra.model
 # 因为我们已经在 entities.py 中定义了新结构
 from modules.admin.domain import entities  # noqa: F401, E402
+from modules.label_manager.domain import entities # noqa: F401, E402
 
 # 如果有其他模块的 model 也需要在这里导入
 
